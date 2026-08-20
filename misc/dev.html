@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Four Moons — DEV TEST LAUNCHER</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#121212; --panel2:#181818; --line:#2a2a2a;
+    --text:#ccc; --muted:#888; --accent:#c02020; --gold:#d4a017;
+    --good:#40c040; --input:#1c1c1c;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Courier New',monospace;background:var(--bg);color:var(--text);}
+  header{padding:10px 16px;background:var(--panel);border-bottom:2px solid var(--accent);display:flex;align-items:baseline;gap:14px;}
+  header h1{margin:0;font-size:16px;color:var(--accent);letter-spacing:1px;}
+  header span{color:var(--muted);font-size:12px;}
+  header .warn{color:var(--gold);font-size:12px;margin-left:auto;}
+  .layout{display:flex;height:calc(100vh - 49px);}
+  .side{width:340px;flex:0 0 auto;overflow-y:auto;background:var(--panel);border-right:2px solid var(--line);padding:12px;scrollbar-width:thin;}
+  .stage{flex:1 1 auto;position:relative;background:#000;}
+  .stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+
+  .group{border:1px solid var(--line);border-radius:4px;padding:10px;margin-bottom:12px;background:var(--panel2);}
+  .group h2{margin:0 0 8px;font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;border-bottom:1px dashed var(--line);padding-bottom:4px;}
+  label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:6px;color:var(--text);}
+  label .n{color:var(--muted);font-size:10px;}
+  input[type=number],select{width:110px;background:var(--input);border:1px solid var(--line);color:var(--text);padding:4px 6px;border-radius:3px;font-family:inherit;font-size:12px;}
+  input[type=number]:focus,select:focus{outline:none;border-color:var(--accent);}
+  .checks{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+  .checks label{width:auto;font-size:11px;margin:0;padding:4px 6px;border:1px solid var(--line);border-radius:3px;background:var(--input);}
+  .checks input{margin-right:4px;}
+  .actions{display:flex;gap:8px;margin-top:4px;}
+  button{flex:1;padding:10px;border-radius:4px;cursor:pointer;font-family:'Courier New',monospace;font-weight:bold;font-size:13px;border:1px solid;background:transparent;transition:.15s;}
+  .primary{color:#fff;background:var(--accent);border-color:var(--accent);}
+  .primary:hover{filter:brightness(1.2);}
+  .secondary{color:var(--gold);border-color:var(--gold);}
+  .secondary:hover{background:rgba(212,160,23,.1);}
+  .hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px;}
+  .hint b{color:var(--gold);}
+  .status{font-size:11px;color:var(--good);min-height:14px;margin-top:6px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>FOUR MOONS — DEV TEST LAUNCHER</h1>
+  <span>Configure a starting state, then jump straight in. The game boots 100% normally with your chosen values.</span>
+  <span class="warn">misc/dev.html — not part of the shipped game</span>
+</header>
+<div class="layout">
+  <div class="side">
+    <div class="group">
+      <h2>Stats</h2>
+      <label>Credits <input type="number" id="st-credits" value="100" step="1"></label>
+      <label>Approval <span class="n">(0–100)</span><input type="number" id="st-approval" value="25" min="0" max="100"></label>
+      <label>Fear <span class="n">(0–100)</span><input type="number" id="st-fear" value="15" min="0" max="100"></label>
+      <label>Loyalty <span class="n">(0–100)</span><input type="number" id="st-loyalty" value="30" min="0" max="100"></label>
+      <label>Military <span class="n">(0–50)</span><input type="number" id="st-military" value="25" min="0" max="50"></label>
+      <label>Institutions <span class="n">(0–100)</span><input type="number" id="st-institutions" value="90" min="0" max="100"></label>
+      <label>Population <span class="n">(0–150)</span><input type="number" id="st-population" value="120" min="0" max="150"></label>
+      <label>Media <span class="n">(0–100)</span><input type="number" id="st-media" value="30" min="0" max="100"></label>
+    </div>
+
+    <div class="group">
+      <h2>Game State</h2>
+      <label>Phase
+        <select id="phase">
+          <option value="0">Phase I — The Return</option>
+          <option value="1">Phase II — The Undermining</option>
+          <option value="2">Phase III — The Cleansing</option>
+          <option value="3">Phase IV — The Carve-Up</option>
+        </select>
+      </label>
+      <label>Day <span class="n">(start day)</span><input type="number" id="day" value="1" min="1"></label>
+      <label>AP <span class="n">(action points)</span><input type="number" id="ap" value="6" min="0" max="99"></label>
+      <label>Gargoyliani bills <span class="n">(0–100)</span><input type="number" id="gargoyle" value="0" min="0" max="100"></label>
+      <label>Open legal issues <span class="n">(0–10)</span><input type="number" id="legalCount" value="0" min="0" max="10"></label>
+    </div>
+
+    <div class="group">
+      <h2>Phase IV — Assets Sold</h2>
+      <div class="checks" id="assets">
+        <label><input type="checkbox" value="pentagon"> Pentagon</label>
+        <label><input type="checkbox" value="moons"> Moons</label>
+        <label><input type="checkbox" value="wall"> Wall</label>
+        <label><input type="checkbox" value="oceans"> Oceans</label>
+        <label><input type="checkbox" value="letter"> Letter</label>
+      </div>
+      <div class="hint">Test Phase IV by selecting phase IV + ticking any assets. Win requires all 5 sold + 500 credits.</div>
+    </div>
+
+    <div class="group">
+      <h2>Start Position</h2>
+      <label>Preset
+        <select id="preset">
+          <option value="4moons">Four Moons Total Terraforming</option>
+          <option value="rally">Rally Stage</option>
+          <option value="courts">Courthouse</option>
+          <option value="media">Media Tower</option>
+          <option value="business">Business District</option>
+          <option value="military">Military Base</option>
+          <option value="border">Great Wall</option>
+          <option value="palace">Blovius Tower</option>
+          <option value="firesale">Fire Sale Emporium</option>
+          <option value="bureau">Bureau of Tremendous Science</option>
+          <option value="custom">Custom (below)</option>
+        </select>
+      </label>
+      <label>Tile X <span class="n">(0–78)</span><input type="number" id="tileX" value="11" min="1" max="78"></label>
+      <label>Tile Y <span class="n">(0–58)</span><input type="number" id="tileY" value="43" min="1" max="58"></label>
+    </div>
+
+    <div class="actions">
+      <button class="primary" onclick="applyAndStart()">APPLY &amp; START</button>
+      <button class="secondary" onclick="resetForm()">RESET</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="hint">
+      <b>How it works:</b> <b>APPLY &amp; START</b> packs your settings into the URL
+      (<code>index.html?dev=…</code>) and reloads the game frame with them — the game
+      auto-starts in exactly that state. Every click is a fresh run, so replay with new
+      values anytime. The main game (no <code>?dev=</code>) is completely unaffected.
+    </div>
+  </div>
+
+  <div class="stage">
+    <iframe id="game" src="../index.html" title="Game"></iframe>
+  </div>
+</div>
+
+<script>
+// Presets: start just below each building's door (bottom-side doors).
+const PRESETS={
+  '4moons': {x:11, y:42},
+  'rally':  {x:29, y:14},
+  'courts': {x:44, y:9},
+  'media':  {x:59, y:14},
+  'business':{x:30, y:33},
+  'military':{x:59, y:33},
+  'border': {x:46, y:44},
+  'palace': {x:43, y:23},
+  'firesale':{x:10, y:14},
+  'bureau': {x:60, y:52},
+};
+
+function getFrame(){
+  return document.getElementById('game');
+}
+
+function buildSetup(){
+  const num=(id)=>{const el=document.getElementById(id);return el.value===''?undefined:Number(el.value);};
+  const S={
+    credits: num('st-credits'),
+    approval: num('st-approval'),
+    fear: num('st-fear'),
+    loyalty: num('st-loyalty'),
+    military: num('st-military'),
+    institutions: num('st-institutions'),
+    population: num('st-population'),
+    media: num('st-media'),
+  };
+  // Drop any stat left blank.
+  for(const k in S){ if(S[k]===undefined) delete S[k]; }
+
+  let startTile;
+  const preset=document.getElementById('preset').value;
+  if(preset==='custom'){
+    startTile={x:num('tileX')||11, y:num('tileY')||43};
+  }else{
+    startTile=preset in PRESETS ? PRESETS[preset] : {x:11,y:43};
+  }
+  // If phase IV and "custom", still allow custom tile; presets always win if chosen.
+
+  const soldAssets=[];
+  document.querySelectorAll('#assets input:checked').forEach(cb=>soldAssets.push(cb.value));
+
+  return {
+    __devSetup:true,            // token (only honored when the game hasn't started)
+    S,
+    phase:num('phase')||0,
+    dayCount:num('day')||1,
+    ap:num('ap'),
+    gargoyle:num('gargoyle'),
+    legalCount:num('legalCount'),
+    soldAssets,
+    startTile,
+  };
+}
+
+function status(msg){document.getElementById('status').textContent=msg;}
+
+function applyAndStart(){
+  const frame=getFrame();
+  if(!frame){
+    status('Game frame not ready yet — wait for it to load and try again.');
+    return;
+  }
+  const setup=buildSetup();
+  // Serialize the setup into the URL, then point the frame at it. The game
+  // reads its own ?dev= payload at boot and auto-starts with these values.
+  // Setting src performs a clean, fresh navigation each time (no cross-frame
+  // calls, no reload races) — works on any http(s) host and even file://.
+  const payload=encodeURIComponent(JSON.stringify(setup));
+  frame.src='../index.html?dev='+payload;
+  status('Launched game with the configured starting state.');
+}
+
+function resetForm(){
+  document.getElementById('st-credits').value=100;
+  document.getElementById('st-approval').value=25;
+  document.getElementById('st-fear').value=15;
+  document.getElementById('st-loyalty').value=30;
+  document.getElementById('st-military').value=25;
+  document.getElementById('st-institutions').value=90;
+  document.getElementById('st-population').value=120;
+  document.getElementById('st-media').value=30;
+  document.getElementById('phase').value='0';
+  document.getElementById('day').value='1';
+  document.getElementById('ap').value='6';
+  document.getElementById('gargoyle').value='0';
+  document.getElementById('legalCount').value='0';
+  document.getElementById('tileX').value='11';
+  document.getElementById('tileY').value='43';
+  document.getElementById('preset').value='4moons';
+  document.querySelectorAll('#assets input').forEach(cb=>cb.checked=false);
+  status('Form reset to defaults.');
+}
+</script>
+</body>
+</html>

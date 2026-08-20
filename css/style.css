@@ -1,0 +1,390 @@
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Courier New',monospace;color:#c0c0c0}
+#game-container{position:relative;width:100vw;height:100vh;overflow:hidden}
+canvas{display:block;position:absolute;top:0;left:0}
+#scanlines{position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);pointer-events:none;z-index:5}
+
+#hud{position:absolute;top:0;left:0;right:0;height:52px;background:rgba(8,0,0,.94);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:10;pointer-events:none;border-bottom:2px solid #3a1a1a}
+#hud>*{pointer-events:auto}
+.hud-portrait{width:36px;height:36px;border:2px solid #c02020;border-radius:3px;object-fit:cover;background:#200}
+.hud-stats{display:flex;gap:6px;flex:1;flex-wrap:wrap;align-items:center}
+.stat{display:flex;align-items:center;gap:2px;font-size:13px;white-space:nowrap;pointer-events:auto}
+.stat-icon{font-size:14px;cursor:default;position:relative;z-index:2;pointer-events:auto}
+.stat-bar{width:48px;height:6px;background:#0a0a0a;border:1px solid #3a1a1a;border-radius:2px;overflow:hidden}
+.stat-fill{height:100%;transition:width .3s;border-radius:1px}
+.stat-val{font-size:11px;color:#666;min-width:22px;text-align:right}
+.stat-credits .stat-fill{background:#c0a000}
+.stat-approval .stat-fill{background:#c02020}
+.stat-fear .stat-fill{background:#ff4040}
+.stat-loyalty .stat-fill{background:#4040c0}
+.stat-military .stat-fill{background:#20c020}
+.stat-institutions .stat-fill{background:#c06020}
+.stat-population .stat-fill{background:#c0c020}
+.stat-media .stat-fill{background:#2080c0}
+.stat-credits .stat-val.debt{color:#c02020;font-weight:bold}
+
+.stat.phase-critical{animation:phasePulse 1.5s infinite}
+.stat.phase-critical .stat-icon{color:#d4a017;text-shadow:0 0 6px rgba(212,160,23,.6)}
+.stat.phase-critical .stat-fill{box-shadow:0 0 4px rgba(212,160,23,.4)}
+.stat.danger{animation:dangerPulse .8s infinite}
+.stat.danger .stat-icon{color:#ff4040;text-shadow:0 0 8px rgba(255,64,64,.8)}
+.stat.danger .stat-bar{border-color:#ff4040}
+.stat.danger .stat-fill{background:#ff4040!important;box-shadow:0 0 6px rgba(255,64,64,.6)}
+.stat.danger .stat-val{color:#ff4040;font-weight:bold}
+@keyframes phasePulse{0%,100%{opacity:1}50%{opacity:.7}}
+@keyframes dangerPulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+#ap-display{display:none;position:absolute;top:56px;left:12px;z-index:10;background:rgba(8,0,0,.9);border:1px solid #3a1a1a;border-radius:4px;padding:6px 10px;font-size:13px}
+body.game-running #ap-display{display:block}
+#ap-display .ap-label{color:#c02020;font-family:'Press Start 2P',monospace;font-size:9px;margin-bottom:2px}
+#ap-display .ap-pips{display:flex;gap:4px;margin-top:3px}
+.ap-pip{width:16px;height:16px;border:1px solid #5a2a2a;border-radius:2px;background:#0a0a0a}
+.ap-pip.filled{background:#c02020;border-color:#c02020}
+.ap-pip.spent{background:#1a0a0a;border-color:#3a1a1a}
+
+#clock{color:#888;font-size:12px;font-family:'VT323',monospace;white-space:nowrap;pointer-events:auto}
+
+#phase-banner{position:absolute;top:56px;left:50%;transform:translateX(-50%);z-index:10;text-align:center;pointer-events:none}
+#phase-name{font-family:'Press Start 2P',monospace;font-size:11px;color:#c02020;text-shadow:0 0 10px rgba(200,30,30,.3)}
+#phase-goal{font-size:12px;color:#555;margin-top:2px}
+
+#legal-ticker{position:absolute;top:56px;right:12px;width:200px;max-height:200px;overflow-y:auto;z-index:10;background:rgba(8,0,0,.9);border:1px solid #5a1a1a;border-radius:4px;padding:6px;font-size:11px;scrollbar-width:thin;scrollbar-color:#333 transparent}
+ .legal-label{color:#c02020;font-family:'Press Start 2P',monospace;font-size:7px;margin-bottom:4px}
+ #legal-ticker.warn{border-color:#c02020;animation:gargoylePulse 1s infinite}
+ .legal-bar{width:100%;height:8px;background:#0a0a0a;border:1px solid #3a1a1a;border-radius:2px;overflow:hidden;margin:4px 0}
+ .legal-fill{height:100%;background:#a03030;transition:width .5s;border-radius:1px}
+ .legal-fill.danger{background:#c02020}
+ .legal-val{color:#c07070;font-size:11px}
+ .legal-item{display:flex;justify-content:space-between;margin-bottom:2px;color:#666}
+.legal-item .sev{font-weight:bold}
+.legal-item .sev.low{color:#555}
+.legal-item .sev.med{color:#c08020}
+.legal-item .sev.high{color:#c02020}
+.legal-total{margin-top:6px;padding-top:4px;border-top:1px solid #5a1a1a;color:#d4a017}
+
+#action-log{position:absolute;bottom:12px;left:12px;width:240px;max-height:180px;overflow-y:auto;z-index:10;background:rgba(8,0,0,.9);border:1px solid #3a1a1a;border-radius:4px;padding:6px;font-size:11px;scrollbar-width:thin;scrollbar-color:#333 transparent}
+#action-log::-webkit-scrollbar{width:3px}
+#action-log::-webkit-scrollbar-thumb{background:#333}
+#action-log h4{position:sticky;top:0;background:#160606;color:#c02020;font-family:'Press Start 2P',monospace;font-size:7px;margin:-6px -6px 4px;padding:4px 6px;z-index:2;border-bottom:1px solid #3a1a1a}
+#action-log h4 button{float:right;background:none;border:1px solid #3a1a1a;color:#c08020;font-family:'Courier New',monospace;font-size:9px;padding:0 4px;cursor:pointer}
+#action-log h4 button:hover{color:#d4a017;border-color:#c08020}
+.log-entry{color:#444;margin-bottom:1px;padding-left:6px;border-left:2px solid #222;font-size:11px;line-height:1.3}
+.log-entry.good{border-color:#2a8a2a;color:#3a6a3a}
+.log-entry.bad{border-color:#8a2a2a;color:#6a3a3a}
+.log-entry.event{border-color:#c08020;color:#8a6a2a}
+.log-time{color:#333;margin-right:3px}
+
+#log-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,0,0,.97);border:2px solid #c02020;border-radius:6px;width:600px;height:75vh;z-index:76;display:none;flex-direction:column;text-align:center;padding:12px 20px;overflow:hidden}
+#log-overlay h2{font-family:'Press Start 2P',monospace;font-size:12px;color:#d4a017;margin-bottom:10px;flex:0 0 auto}
+#log-close{align-self:flex-end;flex:0 0 auto;background:none;border:none;color:#666;font-size:20px;cursor:pointer;line-height:1;padding:0 4px;margin:0 0 6px}
+#log-close:hover{color:#c02020}
+#log-full{flex:1 1 auto;min-height:0;overflow-y:auto;text-align:left;font-size:12px;scrollbar-width:thin;scrollbar-color:#333 transparent;padding:4px}
+#log-full .log-entry{color:#666;padding:2px 6px;border-left:2px solid #222}
+#log-backdrop{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:75;display:none}
+
+#stats-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,0,0,.97);border:2px solid #c02020;border-radius:6px;width:560px;max-height:80vh;z-index:78;display:none;flex-direction:column;text-align:center;padding:12px 20px;overflow:hidden}
+#stats-overlay h2{font-family:'Press Start 2P',monospace;font-size:13px;color:#d4a017;margin-bottom:10px;flex:0 0 auto}
+#stats-close{align-self:flex-end;flex:0 0 auto;background:none;border:none;color:#666;font-size:20px;cursor:pointer;line-height:1;padding:0 4px;margin:0 0 6px}
+#stats-close:hover{color:#c02020}
+#stats-overlay .stats-goals{flex:1 1 auto;min-height:0;overflow-y:auto;text-align:left;scrollbar-width:thin;scrollbar-color:#333 transparent;padding:4px}
+#stats-overlay .stats-goals-head{font-family:'Press Start 2P',monospace;font-size:9px;color:#c02020;margin:10px 0 6px;border-bottom:1px solid #3a1a1a;padding-bottom:4px}
+#stats-overlay .stats-goals-head .hint{font-family:'Courier New',monospace;font-size:10px;color:#666;font-weight:normal}
+#stats-overlay .stats-esc{text-align:center;margin-top:8px;padding-top:8px;border-top:1px solid #2a1a1a;color:#444;font-size:11px;flex:0 0 auto}
+#stats-overlay .stats-esc .key{display:inline-block;background:#c02020;color:#000;padding:0 4px;border-radius:2px;font-weight:bold;font-size:11px}
+#stats-backdrop{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:77;display:none}
+
+.goal-row{display:flex;align-items:center;gap:8px;padding:4px 6px;border:1px solid #2a1a1a;border-radius:4px;margin-bottom:6px;background:rgba(20,6,6,.5)}
+.goal-row.current{border-color:#c08020}
+.goal-row.done{border-color:#2a8a2a;opacity:.65}
+.goal-flag{font-size:12px;width:18px;text-align:center}
+.goal-flag.done{color:#40c040}
+.goal-name{font-family:'Press Start 2P',monospace;font-size:8px;color:#d4a017;width:150px;flex:0 0 auto}
+.goal-text{font-size:12px;color:#888;line-height:1.3}
+.goal-prog{font-size:11px;color:#d4a017;white-space:nowrap}
+.goal-bar{flex:1 1 auto;height:8px;background:#0a0a0a;border:1px solid #3a1a1a;border-radius:2px;overflow:hidden;min-width:60px}
+.goal-fill{height:100%;background:#c08020;display:block}
+
+.statrow{display:flex;align-items:center;gap:8px;padding:4px 6px;border:1px solid #2a1a1a;border-radius:4px;margin-bottom:6px;background:rgba(20,6,6,.5)}
+.statrow .sic{font-size:18px;width:22px;text-align:center;color:#c02020}
+.statrow .sname{font-family:'Press Start 2P',monospace;font-size:8px;color:#ddd;width:110px;flex:0 0 auto}
+.statrow .sval{font-size:16px;color:#fff;min-width:70px;text-align:right;white-space:nowrap}
+.statrow .smax{font-size:11px;color:#666}
+.statrow .sbar{flex:1 1 auto;height:12px;background:#0a0a0a;border:1px solid #3a1a1a;border-radius:2px;overflow:hidden;min-width:80px}
+.statrow .sfill{height:100%;transition:width .3s}
+.statrow .qbtn{background:none;border:1px solid #5a2a2a;color:#d4a017;border-radius:3px;width:20px;height:20px;cursor:pointer;font-weight:bold;flex:0 0 auto}
+.statrow .qbtn:hover{border-color:#d4a017}
+.statrow .sdesc{grid-column:1/-1;font-size:11px;color:#888;line-height:1.4;padding:4px 6px;border-top:1px dashed #3a1a1a;display:none}
+.statrow .sdesc.open{display:block}
+.statrow.open-row{border-color:#c08020}
+
+
+#interact-prompt{position:absolute;bottom:200px;left:50%;transform:translateX(-50%);background:rgba(8,0,0,.92);border:1px solid #c02020;border-radius:4px;padding:6px 14px;font-size:13px;text-align:center;z-index:15;display:none;white-space:nowrap}
+#interact-prompt .key{display:inline-block;background:#c02020;color:#000;padding:0 4px;border-radius:2px;font-weight:bold}
+
+#panel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,0,0,.97);border:2px solid #c02020;border-radius:6px;padding:20px;min-width:340px;max-width:480px;z-index:71;display:none}
+#panel h3{color:#c02020;font-family:'Press Start 2P',monospace;font-size:10px;margin-bottom:6px}
+#panel .desc{font-size:12px;color:#777;margin-bottom:12px;line-height:1.4}
+#panel-close{position:absolute;top:6px;right:8px;background:none;border:none;color:#444;font-size:16px;cursor:pointer}
+#panel-close:hover{color:#c02020}
+.panel-opts{display:flex;flex-direction:column;gap:5px}
+.pbtn{background:#0a0a0a;border:1px solid #5a2a2a;color:#aaa;padding:7px 10px;border-radius:3px;cursor:pointer;text-align:left;font-family:'VT323',monospace;font-size:13px;transition:all .12s}
+.pbtn:hover{border-color:#c02020;background:#1a0a0a;color:#ccc}
+.pbtn .cost{color:#c08020;font-size:11px;display:block}
+.pbtn .eff{color:#2080c0;font-size:11px}
+.pbtn:disabled{opacity:.3;cursor:not-allowed}
+.pbtn .flavor{color:#666;font-size:11px;font-style:italic;margin-top:2px}
+.panel-esc{text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid #2a1a1a;color:#444;font-size:11px}
+.panel-esc .key{display:inline-block;background:#c02020;color:#000;padding:0 4px;border-radius:2px;font-weight:bold;font-size:11px}
+
+#minimap-wrap{position:absolute;top:270px;right:12px;z-index:10;display:none}
+#minimap{background:rgba(8,0,0,.92);border:1px solid #c02020;border-radius:4px;display:block}
+.minimap-legend{font-size:10px;color:#666;text-align:center;padding:3px 0;white-space:nowrap}
+.mm-player{color:#ff4040}
+.mm-building{color:#d4a017}
+.mm-door{color:#40c040}
+.minimap-hint{text-align:center;font-size:10px;color:#444;padding-top:2px}
+
+#event-popup{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(16,0,0,.97);border:2px solid #c02020;border-radius:6px;padding:20px;min-width:360px;max-width:500px;z-index:72;display:none}
+#event-popup h3{color:#c02020;font-family:'Press Start 2P',monospace;font-size:10px;margin-bottom:6px}
+#event-popup .edesc{font-size:12px;color:#999;margin-bottom:12px;line-height:1.5}
+
+#phase-transition{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.95);z-index:79;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#phase-transition h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#c02020;margin-bottom:12px;text-shadow:0 0 20px rgba(200,30,30,.5)}
+#phase-transition p{font-size:14px;color:#888;margin-bottom:8px;max-width:460px;line-height:1.6}
+#phase-transition .goal-text{font-family:'Press Start 2P',monospace;font-size:9px;color:#d4a017;margin:8px 0;padding:8px 12px;border:1px solid #d4a017;background:rgba(212,160,23,.08)}
+#phase-transition button{margin-top:16px;background:#0a0a0a;border:2px solid #c02020;color:#c02020;padding:10px 24px;border-radius:4px;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:10px}
+#phase-transition button:hover{background:#1a0a0a}
+
+#overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.95);z-index:80;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#overlay h1{font-family:'Press Start 2P',monospace;font-size:20px;margin-bottom:10px}
+#overlay p{font-size:13px;color:#777;margin-bottom:18px;max-width:420px;line-height:1.6}
+#overlay .stats-summary{font-size:12px;color:#555;margin-bottom:14px;line-height:1.8}
+#overlay button{background:#0a0a0a;border:2px solid #c02020;color:#c02020;padding:10px 18px;border-radius:4px;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:8px;line-height:1.6;max-width:340px}
+#overlay .overlay-btns{display:flex;flex-direction:column;gap:10px;align-items:center}
+
+#victory{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.96);z-index:81;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+#victory h1{font-family:'Press Start 2P',monospace;font-size:18px;color:#d4a017;margin-bottom:4px;text-shadow:0 0 30px rgba(212,160,23,.4)}
+#victory #vic-sub{font-family:'Press Start 2P',monospace;font-size:10px;color:#c02020;margin:0 0 16px}
+#victory p{font-size:13px;color:#777;margin-bottom:18px;max-width:520px;line-height:1.6}
+#victory .stats-summary{font-size:12px;color:#555;margin-bottom:14px;line-height:1.8}
+#victory button{background:#0a0a0a;border:2px solid #d4a017;color:#d4a017;padding:10px 24px;border-radius:4px;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:9px}
+#victory button:hover{background:#1a1405;box-shadow:0 0 20px rgba(212,160,23,.2)}
+
+
+#title-screen{position:absolute;top:0;left:0;right:0;bottom:0;background:#000;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#555 transparent}
+#title-screen h1{font-family:'Press Start 2P',monospace;font-size:20px;color:#c02020;margin-bottom:6px;line-height:1.4;text-shadow:0 0 30px rgba(200,30,30,.3)}
+#title-screen h2{font-size:16px;color:#d4a017;margin-bottom:18px}
+#title-screen .lore{max-width:860px;margin:6px auto;line-height:1.5;color:#999;font-size:14px}
+#title-screen .lore em{color:#d4a017;font-style:normal}
+#title-screen .phases{max-width:600px;margin:10px auto;text-align:left;font-size:12px;color:#666;border-left:2px solid #c02020;padding-left:12px;line-height:1.7}
+#title-screen .phases strong{color:#d4a017}
+#title-screen .inst{font-size:13px;color:#555;margin:10px 0;line-height:1.7}
+#title-screen .inst b{color:#c02020}
+#title-screen button{background:#0a0a0a;border:2px solid #c02020;color:#c02020;padding:12px 32px;border-radius:4px;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:11px;transition:all .2s;margin-top:12px}
+#title-screen button:hover{background:#1a0a0a;box-shadow:0 0 20px rgba(200,30,30,.2)}
+#title-screen .disclaimer{font-size:11px;color:#333;margin-top:14px;max-width:860px;line-height:1.4}
+
+#help-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,0,0,.97);border:2px solid #c02020;border-radius:6px;width:552px;max-height:80vh;z-index:74;display:none;flex-direction:column;text-align:center;padding:20px;overflow:hidden}
+#help-overlay::-webkit-scrollbar{width:6px}
+#help-overlay::-webkit-scrollbar-thumb{background:#555;border-radius:3px}
+#help-close{align-self:flex-end;flex:0 0 auto;background:none;border:none;color:#666;font-size:20px;cursor:pointer;line-height:1;padding:0 4px;margin:0 0 8px}
+#help-close:hover{color:#c02020}
+#help-overlay h2{font-family:'Press Start 2P',monospace;font-size:14px;color:#d4a017;margin-bottom:12px;flex:0 0 auto}
+#help-overlay .help-content{flex:1 1 auto;min-height:0;overflow-y:auto;text-align:left;font-size:13px;color:#888;line-height:1.8;scrollbar-width:thin;scrollbar-color:#555 transparent}
+#help-overlay .help-content h3{color:#c02020;font-family:'Press Start 2P',monospace;font-size:9px;margin:14px 0 6px}
+#help-overlay .help-content b{color:#d4a017}
+#help-overlay .help-content .key{display:inline-block;background:#c02020;color:#000;padding:0 4px;border-radius:2px;font-weight:bold;font-size:12px}
+#help-overlay button:hover{background:#1a0a0a}
+#help-backdrop{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:73;display:none}
+
+#gargoyle-gauge{position:absolute;top:56px;right:224px;width:200px;z-index:10;background:rgba(8,0,0,.9);border:1px solid #5a1a5a;border-radius:4px;padding:6px;font-size:11px;transition:border-color .3s}
+#gargoyle-gauge.warn{border-color:#c02020;animation:gargoylePulse 1s infinite}
+.gargoyle-label{color:#a040a0;font-family:'Press Start 2P',monospace;font-size:7px;margin-bottom:4px}
+.gargoyle-bar{width:100%;height:8px;background:#0a0a0a;border:1px solid #3a1a3a;border-radius:2px;overflow:hidden;margin:4px 0}
+.gargoyle-fill{height:100%;background:#a040a0;transition:width .5s;border-radius:1px}
+.gargoyle-fill.danger{background:#c02020}
+.gargoyle-val{color:#c060c0;font-size:11px}
+#gargoyle-threat{color:#ff40ff;font-size:10px;margin-top:4px;font-weight:bold}
+@keyframes gargoylePulse{0%,100%{border-color:#c02020}50%{border-color:#ff4040}}
+
+/* P-menu (Stats & Goals) legal panels — expose the legal / gargoyle readouts
+   for monitoring when the floating bars are hidden (mobile). */
+#p-legal-ticker,#p-gargoyle-gauge{
+  background:rgba(20,6,6,.5);
+  border:1px solid #2a1a1a;
+  border-radius:4px;
+  padding:8px 10px;
+  margin-bottom:8px;
+}
+#p-legal-ticker.warn{border-color:#c02020}
+#p-gargoyle-gauge.warn{border-color:#c02020;animation:gargoylePulse 1s infinite}
+#p-gargoyle-threat{color:#ff40ff;font-size:10px;margin-top:4px;font-weight:bold}
+
+#help-btn-hud{position:absolute;top:56px;right:436px;z-index:10;background:rgba(8,0,0,.9);border:1px solid #3a3a1a;border-radius:3px;padding:3px 8px;font-size:11px;color:#d4a017;cursor:pointer;font-family:'Press Start 2P',monospace}
+#help-btn-hud:hover{border-color:#d4a017}
+
+#help-btn-title{background:none;border:1px solid #555;color:#555;padding:6px 14px;border-radius:4px;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:9px;margin-top:12px}
+#help-btn-title:hover{border-color:#d4a017;color:#d4a017}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+#debug-btn{position:fixed;bottom:8px;right:8px;z-index:100;background:#2a0a0a;border:1px solid #633;color:#c04040;padding:4px 10px;border-radius:3px;cursor:pointer;font-family:monospace;font-size:10px}
+#debug-btn:hover{background:#3a1a1a;border-color:#c04040}
+#debug-panel{position:fixed;top:8px;right:8px;width:340px;max-height:calc(100vh - 16px);overflow-y:auto;z-index:99;background:rgba(0,0,0,.94);border:1px solid #c04040;border-radius:4px;padding:10px;font-family:'Courier New',monospace;font-size:11px;color:#c04040;display:none;scrollbar-width:thin;scrollbar-color:#633 transparent}
+#debug-panel h4{color:#ff6060;margin-bottom:6px;font-size:12px;border-bottom:1px solid #331a1a;padding-bottom:4px}
+.dbg-row{display:flex;justify-content:space-between;margin-bottom:2px}
+.dbg-row .k{color:#888}
+.dbg-row .v{color:#c04040}
+.dbg-row .v.ok{color:#40c040}
+.dbg-row .v.warn{color:#c0c040}
+.dbg-row .v.err{color:#ff4040}
+.dbg-section{margin-top:8px;padding-top:6px;border-top:1px solid #2a1a1a;color:#888}
+#debug-log{max-height:120px;overflow-y:auto;margin-top:6px;font-size:10px;color:#666;scrollbar-width:thin}
+
+/* ============================================================
+   MOBILE / TOUCH SUPPORT
+   Touch controls are hidden by default and shown via JS on
+   touch-capable / narrow screens (css-toggle "touch-mode").
+   ============================================================ */
+
+/* Touch-only elements start hidden; they appear only once the game is
+   running (body.touch-mode.game-running) so they're never on the splash. */
+.touch-only{display:none}
+body.touch-mode.game-running .touch-only{display:block}
+body.touch-mode.game-running #touch-hud{display:flex}
+
+body.touch-mode{cursor:default;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+body.touch-mode canvas{touch-action:none}
+
+/* ---- Virtual joystick (fixed bottom-left pad) ---- */
+#joystick{
+  position:fixed;left:24px;bottom:120px;top:auto;z-index:70;
+  width:150px;height:150px;
+  background:radial-gradient(circle,rgba(255,255,255,.06),rgba(200,30,30,.12) 60%,transparent 70%);
+  border:2px solid rgba(200,30,30,.35);border-radius:50%;
+  pointer-events:auto;
+  touch-action:none;   /* keep the drag, never let the browser scroll/pinch it */
+  box-shadow:0 0 20px rgba(0,0,0,.6);
+}
+#joystick-knob{
+  position:absolute;left:50%;top:50%;width:60px;height:60px;
+  margin:-30px 0 0 -30px;border-radius:50%;
+  background:rgba(200,30,30,.55);border:2px solid rgba(255,80,80,.7);
+  box-shadow:0 0 12px rgba(200,30,30,.5);
+  transform:translate(0,0);
+}
+
+/* ---- On-screen ACT button ---- */
+#interact-btn{
+  position:fixed;right:18px;bottom:110px;z-index:70;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(200,30,30,.85);border:2px solid #ff4040;border-radius:50%;
+  color:#fff;font-family:'Press Start 2P',monospace;
+  width:76px;height:76px;text-align:center;
+  box-shadow:0 0 20px rgba(200,30,30,.6);pointer-events:auto;
+  line-height:1.15;padding:6px;
+}
+#interact-btn-label{
+  display:block;font-size:11px;max-height:100%;width:100%;
+  overflow:hidden;word-wrap:break-word;
+}
+#interact-btn:active{background:#ff4040}
+
+/* ---- Mobile HUD shortcut buttons (top-right) ---- */
+#touch-hud{
+  position:fixed;top:58px;right:12px;z-index:70;
+  flex-direction:column;gap:6px;pointer-events:none;
+}
+#touch-hud .touch-hud-btn{
+  width:40px;height:40px;border-radius:6px;
+  background:rgba(8,0,0,.9);border:1px solid #3a3a1a;color:#d4a017;
+  font-family:'Press Start 2P',monospace;font-size:13px;cursor:pointer;
+  pointer-events:auto;line-height:1;
+}
+#touch-hud .touch-hud-btn:active{background:#1a1205;color:#ffdd66}
+
+/* ---- Universal on-screen CLOSE button (top-left) ---- */
+#touch-close{
+  position:fixed;top:58px;left:12px;z-index:70;pointer-events:none;
+}
+#touch-close-btn{
+  width:44px;height:44px;border-radius:6px;
+  background:rgba(200,30,30,.85);border:1px solid #ff4040;color:#fff;
+  font-size:22px;font-weight:bold;cursor:pointer;pointer-events:auto;line-height:1;
+}
+#touch-close-btn:active{background:#ff4040}
+
+/* ============================================================
+   RESPONSIVE LAYOUT — phones & narrow windows
+   ============================================================ */
+@media (max-width:820px){
+  /* HUD top bar: allow wrap, shrink elements */
+  #hud{height:auto;flex-wrap:wrap;padding:6px 8px;gap:4px}
+  .hud-stats{width:100%;order:2;gap:4px;padding-left:36px}
+  .stat{font-size:11px}
+  .stat-bar{width:34px;height:5px}
+  .stat-val{font-size:9px;min-width:16px}
+  .hud-portrait{position:absolute;top:6px;left:6px;width:26px;height:26px}
+  #clock{position:absolute;top:12px;right:10px}
+
+  /* Legal-exposure bars: only visible on desktop main screen. On mobile they
+     are hidden and instead shown inside the P menu (Stats & Goals). */
+  #legal-ticker{display:none!important}
+  #gargoyle-gauge{display:none!important}
+  #help-btn-hud{display:none}
+  /* The universal top-left ✕ is redundant on mobile — hide it */
+  #touch-close{display:none!important}
+
+  /* Phase banner centered under HUD */
+  #phase-banner{top:56px;left:50%;transform:translateX(-50%);width:100%;padding:0 8px}
+  #phase-name{font-size:9px}
+  #phase-goal{font-size:10px}
+
+  /* AP display — top-left, matching desktop (was floating at the bottom,
+     covering the action log) */
+  #ap-display{top:56px;bottom:auto;left:12px;font-size:11px;z-index:72}
+  .ap-pip{width:13px;height:13px}
+
+  /* Bottom action log: collapse to a compact strip */
+  #action-log{bottom:14px;left:50%;transform:translateX(-50%);width:56%;max-height:96px;font-size:10px}
+
+  /* Minimap fits screen — keep the 200x150 backing-store aspect ratio so the
+     drawing isn't stretched/distorted on narrow screens. */
+  #minimap-wrap{top:auto;bottom:150px;right:12px;width:44vw;max-width:200px}
+  #minimap{width:100%!important;height:auto!important;aspect-ratio:200/150}
+
+  /* Panels & overlays fit the viewport */
+  #panel,#event-popup{min-width:0;width:92vw;max-width:92vw;max-height:86vh;overflow-y:auto;padding:16px}
+  #stats-overlay,#log-overlay,#help-overlay{width:94vw;max-width:94vw;max-height:88vh}
+  #overlay,#victory{overflow-y:auto}
+  #interact-prompt{display:none!important}
+
+  /* Bigger, easier tap targets */
+  .pbtn{padding:12px 12px;font-size:15px}
+  .pbtn .cost{font-size:12px}
+  #phase-transition p{max-width:90vw}
+  #title-screen{padding:14px 14px 20px}
+  #title-screen h1{font-size:14px;margin-bottom:4px}
+  #title-screen h2{font-size:12px;margin-bottom:12px}
+  #title-screen .lore{font-size:12px;margin:4px auto;line-height:1.4}
+  #title-screen .inst{font-size:11px;margin:6px 0}
+  #title-screen .disclaimer{font-size:9px;margin-top:8px}
+  #title-screen button{padding:11px 26px;font-size:10px;margin-top:10px}
+  #title-screen .approval-tag{display:none}
+  #title-screen{overflow-y:auto;justify-content:flex-start;overscroll-behavior:contain}
+}
+
+@media (max-width:480px){
+  #hud{padding:4px 6px}
+  .stat-bar{width:26px}
+  .stat-val{font-size:8px;min-width:14px}
+  #ap-display{top:56px;bottom:auto;left:10px}
+  #action-log{bottom:10px;width:70%;max-height:70px}
+  #interact-btn{width:66px;height:66px;font-size:14px;right:12px;bottom:90px}
+  #joystick{width:130px;height:130px}
+}
+
+/* When using touch controls, hide desktop keyboard hints */
+body.touch-mode .key,
+body.touch-mode #interact-prompt{display:none}
+
