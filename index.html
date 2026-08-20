@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Four Moons Total Terraforming</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="game-container">
+  <canvas id="world"></canvas>
+  <canvas id="entities"></canvas>
+  <div id="scanlines"></div>
+  <div id="hud">
+    <img class="hud-portrait" src="img/rex.jpg" alt="Rex">
+    <div class="hud-stats">
+      <div class="stat stat-credits"><span class="stat-icon" title="Credits (trillions)">t</span><div class="stat-bar"><div class="stat-fill" id="bar-credits"></div></div><span class="stat-val" id="val-credits">100</span></div>
+      <div class="stat stat-approval"><span class="stat-icon" title="Approval (public support)">♥</span><div class="stat-bar"><div class="stat-fill" id="bar-approval"></div></div><span class="stat-val" id="val-approval">25</span></div>
+      <div class="stat stat-fear"><span class="stat-icon" title="Fear (intimidation)">☠</span><div class="stat-bar"><div class="stat-fill" id="bar-fear"></div></div><span class="stat-val" id="val-fear">15</span></div>
+      <div class="stat stat-loyalty"><span class="stat-icon" title="Loyalty (inner circle)">★</span><div class="stat-bar"><div class="stat-fill" id="bar-loyalty"></div></div><span class="stat-val" id="val-loyalty">30</span></div>
+      <div class="stat stat-military"><span class="stat-icon" title="Military (troops)">⚔</span><div class="stat-bar"><div class="stat-fill" id="bar-military"></div></div><span class="stat-val" id="val-military">5</span></div>
+      <div class="stat stat-institutions"><span class="stat-icon" title="Institutions (courts, press, law)">⚖</span><div class="stat-bar"><div class="stat-fill" id="bar-institutions"></div></div><span class="stat-val" id="val-institutions">90</span></div>
+      <div class="stat stat-population"><span class="stat-icon" title="Population (citizens)">👥</span><div class="stat-bar"><div class="stat-fill" id="bar-population"></div></div><span class="stat-val" id="val-population">120</span></div>
+      <div class="stat stat-media"><span class="stat-icon" title="Media (press control)">📺</span><div class="stat-bar"><div class="stat-fill" id="bar-media"></div></div><span class="stat-val" id="val-media">10</span></div>
+    </div>
+    <div id="clock">DAY 1 — 08:00</div>
+  </div>
+  <div id="ap-display"><div class="ap-label">ACTION POINTS</div><div class="ap-pips" id="ap-pips"></div></div>
+  <div id="phase-banner"><div id="phase-name">PHASE I — THE RETURN</div><div id="phase-goal">Build approval to 50+ to consolidate power</div></div>
+  <div id="gargoyle-gauge"><div class="gargoyle-label">GARGOYLIANI LEGAL</div><div class="gargoyle-bar"><div class="gargoyle-fill" id="gargoyle-fill"></div></div><span class="gargoyle-val" id="gargoyle-val">$0</span></div>
+  <div id="legal-ticker"><div class="legal-label">LEGAL EXPOSURE</div><div class="legal-bar"><div class="legal-fill" id="legal-fill"></div></div><span class="legal-val" id="legal-val">$0</span><div id="legal-items"></div></div>
+  <div id="action-log"><h4>LOG <button id="log-expand-btn" onclick="toggleLog()">&#9649; EXPAND</button></h4><div id="log-entries"></div></div>
+  <div id="interact-prompt">Press <span class="key">E</span></div>
+  <div id="interact-btn" class="touch-only"><span id="interact-btn-label">ACT</span></div>
+  <div id="joystick" class="touch-only"><div id="joystick-knob"></div></div>
+  <div id="touch-hud" class="touch-only">
+    <button id="touch-pause" class="touch-hud-btn" title="Stats &amp; Goals">P</button>
+    <button id="touch-help" class="touch-hud-btn" title="Help">?</button>
+    <button id="touch-minimap" class="touch-hud-btn" title="Minimap">M</button>
+  </div>
+  <div id="touch-close" class="touch-only"><button id="touch-close-btn">&times;</button></div>
+  <div id="panel"><button id="panel-close">&times;</button><h3 id="panel-title"></h3><p class="desc" id="panel-desc"></p><div class="panel-opts" id="panel-opts"></div><div class="panel-esc">Press <span class="key">ESC</span> to close</div></div>
+  <div id="event-popup"><h3 id="evt-title"></h3><p class="edesc" id="evt-desc"></p><div class="panel-opts" id="evt-opts"></div><div class="panel-esc">Press <span class="key">ESC</span> to close</div></div>
+  <div id="minimap-wrap"><canvas id="minimap" width="200" height="150"></canvas><div class="minimap-legend"><span class="mm-player">●</span> You <span class="mm-building">■</span> Building <span class="mm-door">□</span> Door</div><div class="minimap-hint">Press <span class="key">M</span> to close</div></div>
+  <div id="phase-transition"><h1 id="pt-title"></h1><p id="pt-text"></p><div class="goal-text" id="pt-goal"></div><button id="pt-btn">CONTINUE</button></div>
+  <button id="debug-btn" onclick="document.getElementById('debug-panel').style.display=document.getElementById('debug-panel').style.display==='block'?'none':'block'">DEBUG</button>
+  <div id="debug-panel">
+    <h4>DEBUG PANEL</h4>
+    <div id="dbg-content"></div>
+    <div class="dbg-section">EVENT LOG</div>
+    <div id="debug-log"></div>
+  </div>
+  <button id="help-btn-hud" onclick="toggleHelp()">?</button>
+  <div id="help-backdrop" onclick="toggleHelp()"></div>
+  <div id="log-overlay">
+    <button id="log-close" onclick="toggleLog()">&times;</button>
+    <h2>LOG — THE FULLEST, MOST BEAUTIFUL RECORD</h2>
+    <div id="log-full"></div>
+  </div>
+  <div id="log-backdrop" onclick="toggleLog()"></div>
+  <div id="stats-overlay">
+    <button id="stats-close" onclick="toggleStatsWindow()">&times;</button>
+    <h2>STATS &amp; GOALS</h2>
+    <div class="stats-goals">
+      <div class="stats-goals-head">PHASE GOALS</div>
+      <div id="goals-panel"></div>
+      <div class="stats-goals-head">CURRENT STATS <span class="hint">(click a ? for what it does)</span></div>
+      <div id="stats-panel"></div>
+      <div class="stats-goals-head">LEGAL &amp; GARGOYLIANI</div>
+      <div id="p-legal-ticker">
+        <div class="legal-label">LEGAL EXPOSURE</div>
+        <div class="legal-bar"><div class="legal-fill" id="p-legal-fill"></div></div>
+        <span class="legal-val" id="p-legal-val">$0</span>
+        <div id="p-legal-items"></div>
+      </div>
+      <div id="p-gargoyle-gauge">
+        <div class="gargoyle-label">GARGOYLIANI LEGAL</div>
+        <div class="gargoyle-bar"><div class="gargoyle-fill" id="p-gargoyle-fill"></div></div>
+        <span class="gargoyle-val" id="p-gargoyle-val">$0</span>
+        <div id="p-gargoyle-threat"></div>
+      </div>
+    </div>
+    <div class="stats-esc">Press <span class="key">ESC</span> or <span class="key">P</span> to close &mdash; game is paused</div>
+  </div>
+  <div id="stats-backdrop" onclick="toggleStatsWindow()"></div>
+  <div id="help-overlay">
+    <button id="help-close" onclick="toggleHelp()">&times;</button>
+    <h2>HELP — HOW TO DESTROY DEMOCRACY</h2>
+    <div class="help-content">
+      <h3>MOVEMENT</h3>
+      <b>WASD</b> or <b>Arrow Keys</b> — Move Rex around the city.<br>
+      A golden arrow points toward the nearest building.
+
+      <h3>INTERACTIONS</h3>
+      <b>E</b> or <b>Space</b> — Interact with buildings and NPCs.<br>
+      Walk up to a building's <b>ENTRY</b> marker and press E to open it.<br>
+      Walk near <b>NPCs</b> (colored circles with icons) for free quick interactions.
+      <b>ESC</b> — Close any open panel or window.
+
+      <h3>MAP</h3>
+      <b>M</b> — Toggle minimap showing buildings and your position.<br>
+      <b>P</b> — Pause / open the <b>STATS &amp; GOALS</b> window (click any stat in the bar, or the ? for what each stat does).<br>
+      <b>?</b> — Toggle this help screen.
+
+      <h3>AP (ACTION POINTS)</h3>
+      You get <b id="ap-num-help"></b> AP per day. Walking to buildings and taking actions costs AP.<br>
+      The day ends automatically when the clock hits 10 PM. AP resets.<br>
+      Some actions are <b>FREE</b> (0 AP) — always check for those.
+
+      <h3>PHASES</h3>
+      <b>Phase I</b> — Build approval to 50+ and loyalty to 35+ to seize power.<br>
+      <b>Phase II</b> — Break institutions below 25%.<br>
+      <b>Phase III</b> — Reduce population below 50.<br>
+      <b>Phase IV</b> — THE CARVE-UP. Sell everything at the <b>FIRE SALE EMPORIUM</b> (left side of the map): sell all 5 assets and hit 500+ credits. The galaxy is a fire sale. Everything must go.
+
+      <h3>LOSE CONDITIONS</h3>
+      Credits hit -150. Approval hits 0 while fear is low. Loyalty hits 0.<br>
+      Population hits 0. Legal bills overwhelm you.
+
+      <h3>MILITARY DANGER</h3>
+      Keep military at <b>10+</b>. Below that, each game-hour carries a chance of a
+      military overthrow that grows as your numbers drop. High <b>fear</b> keeps the
+      army in line; low fear makes a coup more likely. Military 0 is the highest
+      risk, but it's a roll, not instant death — still, don't let it get there.<br>
+      Moves that spend military (or fear) now require you to actually have them.
+      Rebuild troops cheaply with the Military Base's <b>0-AP "Recruit 'Volunteers'"</b>.
+
+      <h3>LEGAL ISSUES</h3>
+      Lawsuits pile up over time. Settle your own judgments at the <b>COURTHOUSE</b> (the list in the corner is display-only).<br>
+      Ignore them too long and they become YOUR problem — the law hits harder when institutions recover.<br>
+      Gargoyliani has his own stack of trouble — watch his gauge and settle him at the <b>COURTHOUSE</b> before he flips.<br>
+      Some actions are crimes. Commit enough and they come with paperwork.
+
+      <h3>TIPS</h3>
+      - Grift at the Business District to fund your operations.<br>
+      - Rallies at the Rally Stage boost approval AND loyalty.<br>
+      - Propaganda at Media Tower is cheap approval.<br>
+      - Keep your MEDIA up. If you lose the narrative, approval AND fear drain unchecked.<br>
+      - Free actions (0 AP) exist at some buildings — use them every day.<br>
+      - The <b>Bureau of Tremendous Science</b> (bottom-right, Phase II+) turns funding into media, "public health" surveys into fewer people, and legitimacy into cash.<br>
+      - New people on the street: <b>real scientists</b> you can bribe, menace, or (for free, weakly) suppress; <b>quack scientists</b> who'll publish any fake paper for the right price; spies with secrets, influencers with followers, and union bosses with muscle.<br>
+      - Events pop up and demand a response. Every one lets you <b>Do Nothing</b> for 0 AP, but ignoring always costs you a point or two — spending AP is usually the better move.
+    </div>
+  </div>
+  <div id="overlay"><h1 id="ol-title"></h1><p id="ol-text"></p><div class="stats-summary" id="ol-stats"></div><div class="overlay-btns"><button onclick="restoreFromPhaseSnapshot()">RETRY PHASE — YOUR VICTORY WAS CLEARLY STOLEN FROM YOU. GLITCH. FAKE NEWS.</button><button onclick="location.reload()">RESTART GAME — BACK TO THE PARKING LOT</button></div></div>
+  <div id="victory"><h1 id="vic-title">TOTAL TERRAFORMING COMPLETE</h1><p id="vic-sub">You Won. Congratulations. You Monster.</p><p id="vic-text"></p><div class="stats-summary" id="vic-stats"></div><button onclick="location.reload()">DO IT ALL AGAIN, SICKO</button></div>
+  <div id="title-screen">
+    <h1>FOUR MOONS TOTAL TERRAFORMING</h1>
+    <h2>A Galactic Fascism Simulator</h2>
+    <p class="lore"><em>Blovius Rex</em> is a failed would-be fascist who lost the galactic election. He is now at his lowest, surrounded by fools such as <em>Gargoyliani</em>, who is giving a presentation at Four Moons Total Terraforming after accidentally failing to book the Four Moons Event Center.</p>
+    <p class="lore">Now, with <em>ectoplasm dripping down his face</em>, Gargoyliani is trying to explain how an insider cabal of <em>plasmaphiles and organ thieves</em> stole the galactic election.</p>
+    <p class="lore approval-tag" style="color:#d4a017">Blovius' approval rating is at <b>25%</b>. Stage a comeback, no matter what humanoid rights, decency, or even basic dignity stands in the way.</p>
+    <div class="inst">
+      <b>WASD / Arrows</b> — Move Rex around the city<br>
+      <b>E / Space</b> — Interact with people and buildings<br>
+      You have <b id="ap-num-title"></b> Action Points per day. Spend them wisely.<br>
+      Walk to buildings to spend AP on strategic actions.<br>
+      Walk near people for quick free interactions.
+    </div>
+    <button onclick="beginGame()">BEGIN THE ASCENSION</button>
+    <button id="help-btn-title" onclick="toggleHelp()">? HELP</button>
+    <p class="disclaimer">[A satirical work of fiction. Any resemblance to real persons, living or sufficiently orange, is entirely intentional.]</p>
+  </div>
+</div>
+<script src="js/config.js"></script>
+<script src="data/ambient.js"></script>
+<script src="data/fake_policies.js"></script>
+<script src="data/greetings.js"></script>
+<script src="data/events.js"></script>
+<script src="js/buildings.js"></script>
+<script src="js/events_apply.js"></script>
+<script src="js/flavor_text.js"></script>
+<script src="js/render.js"></script>
+<script src="js/game.js"></script>
+<script src="js/touch.js"></script>
+</body>
+</html>
